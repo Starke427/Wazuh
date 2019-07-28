@@ -1,18 +1,18 @@
 # Wazuh
 
+Wazuh is a free, open source and enterprise-ready security monitoring solution for threat detection, integrity monitoring, incident response and compliance.
+
+While the tools are publicly available, it is highly recommended that you have them professionally managed for you. The scripts here-in will help you deploy a stand-alone server for proof-of-concepts, testing, and personal usage.
+
 # wazuh_setup.sh
 
 This script installs a stand-alone instance of Wazuh 3.9.2 on Elastic 7.1.1 and has been tested on CentOS 7.6.
-This is ideal as a proof-of-concept of what Wazuh is capable of, and can provide fundamental audit capabilities.
 
 ## Installation:
 
-> git clone https://github.com/Starke427/Wazuh
-
-> cd Wazuh
-
-> chmod +x wazuh_setup.sh
-
+> git clone https://github.com/Starke427/Wazuh  
+> cd Wazuh  
+> chmod +x wazuh_setup.sh  
 > ./wazuh_setup.sh
 
 
@@ -20,13 +20,10 @@ This is ideal as a proof-of-concept of what Wazuh is capable of, and can provide
 After installation completes, navigate to http://<Host_IP>:5601 to configure the Kibana app.
 When prompted for cluster information, the defaults are:
 
-Username: foo
-
-Password: bar
-
-Host URL: http://<Host_IP>
-
-Port: 55000
+Username: foo  
+Password: bar  
+Host URL: http://<Host_IP>  
+Port: 55000  
 
 
 
