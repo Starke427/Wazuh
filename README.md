@@ -48,6 +48,10 @@ By default, the manager can recieve syslog over UDP/514.
 
 This Manager has been configured to use TCP/1514 for on-going communication with agents.
 
+# suricata_setup.sh
+
+This script automates the process of deploying suricata for network intrusion detection monitoring. It can be run on the Manager or an agent host. Ideally, this should be deployed on a host with a dedicated network interface for network monitoring. If an interface is not provided, the script will set up monitoring on the first interface it sees. It also sets cron tasks for daily rule updates.
+
 # rename_agents.sh
 
 This script automates the process of renaming already deployed agents, and must be run on the Manager.
