@@ -5,7 +5,7 @@
 This script installs a stand-alone instance of Wazuh 3.9.2 on Elastic 7.1.1 and has been tested on CentOS 7.6.
 This is ideal as a proof-of-concept of what Wazuh is capable of, and can provide fundamental audit capabilities.
 
-Installation:
+## Installation:
 
 > git clone https://github.com/Starke427/Wazuh
 
@@ -34,7 +34,7 @@ After providing api credentials, navigate to Management > Kibana Index Patterns,
 
 
 
-Notes:
+## Notes:
 
 It currently does not configure an nginx proxy for TLS  encyprtion.
 Once ran, it will use the first interface IP to configure everything, so it's recommended to run this on a fresh install.
