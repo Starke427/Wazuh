@@ -7,13 +7,10 @@ This is ideal as a proof-of-concept of what Wazuh is capable of, and can provide
 
 Installation:
 
-git clone https://github.com/Starke427/Wazuh
-
-cd Wazuh
-
-chmod +x wazuh_setup.sh
-
-./wazuh_setup.sh
+> git clone https://github.com/Starke427/Wazuh
+> cd Wazuh
+> chmod +x wazuh_setup.sh
+> ./wazuh_setup.sh
 
 
 
