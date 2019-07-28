@@ -8,15 +8,23 @@ This is ideal as a proof-of-concept of what Wazuh is capable of, and can provide
 Installation:
 
 git clone https://github.com/Starke427/Wazuh
+
 cd Wazuh
+
 chmod +x wazuh_setup.sh
+
 ./wazuh_setup.sh
+
 
 After installation completes, navigate to http://<Host_IP>:5601 to configure the Kibana app.
 When prompted for cluster information, the defaults are:
+
 Username: foo
+
 Password: bar
+
 Host URL: http://<Host_IP>
+
 Port: 55000
 
 After providing api credentials, navigate to Management > Kibana Index Patterns, select wazuh-alerts-3.x-* and click on the star in the top-right corner. From here, you can navigate to the Kibana app and start deploying agent. Agent installation scripts will have already been created for Linux, Windows, and MacOS in your /var/ossec/agent_scripts folder on the Manager.
