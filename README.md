@@ -2,7 +2,7 @@
 
 Wazuh is a free, open source and enterprise-ready security monitoring solution for threat detection, integrity monitoring, incident response and compliance.  
 
-While the tools are publicly available, it is highly recommended that you have them professionally managed for you. A Managed Security Service is capable of managing the back-end maintenaince, troubleshooting, and tuning. They can also provide on-going tuning, reporting, and, most importantly, investigation and alerting on security incidents.  
+While the tools are publicly available, it is highly recommended that you have them professionally managed for you. A Managed Security Service is capable of managing the back-end maintenaince, troubleshooting, and tuning. They can also provide continuous monitoring, reporting, and investigation and escalation of security incidents. 
 
 The scripts here-in will help you deploy a stand-alone server for proof-of-concepts, testing, and personal usage.
 
