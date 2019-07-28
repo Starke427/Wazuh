@@ -1,7 +1,9 @@
 # Wazuh
 
 Wazuh is a free, open source and enterprise-ready security monitoring solution for threat detection, integrity monitoring, incident response and compliance.  
+
 While the tools are publicly available, it is highly recommended that you have them professionally managed for you. A Managed Security Service is capable of managing the back-end maintenaince, troubleshooting, and tuning. They can also provide on-going tuning, reporting, and, most importantly, investigation and alerting on security incidents.  
+
 The scripts here-in will help you deploy a stand-alone server for proof-of-concepts, testing, and personal usage.
 
 # wazuh_setup.sh
@@ -36,10 +38,14 @@ After providing api credentials, navigate to Management > Kibana Index Patterns,
 
 ## Notes:
 
-It currently does not configure an nginx proxy for TLS  encyprtion.
+It currently does not configure an nginx proxy for TLS  encyprtion.  
+
 Once ran, it will use the first interface IP to configure everything, so it's recommended to run this on a fresh install.
+
 This script will also create agent installation scripts under /var/ossec/agent_scripts.
+
 By default, the manager can recieve syslog over UDP/514.
+
 This Manager has been configured to use TCP/1514 for on-going communication with agents.
 
 # rename_agents.sh
