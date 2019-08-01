@@ -52,6 +52,10 @@ This Manager has been configured to use TCP/1514 for on-going communication with
 
 This script automates the process of deploying suricata for network intrusion detection monitoring. It can be run on the Manager or an agent host. Ideally, this should be deployed on a host with a dedicated network interface for network monitoring. If an interface is not provided, the script will set up monitoring on the first interface it sees. It also sets cron tasks for daily rule updates.
 
+# build_install_scripts.sh
+
+This script automates the creation of installation scripts for the different operating systems. The wazuh_setup script already does this, but this is helpful for already deployed instances. The script will ask for your instance IP and authentication password and build installer scripts for CentOS/RedHat, Debian/Ubuntu, MacOS and Windows.
+
 # rename_agents.sh
 
 This script automates the process of renaming already deployed agents, and must be run on the Manager.
