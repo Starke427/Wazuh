@@ -33,3 +33,9 @@ sed -i '$s/^/  <\/localfile>\n/' /var/ossec/etc/ossec.conf
 firewall-cmd --reload
 systemctl restart rsyslog
 systemctl restart wazuh-agent
+
+cat << EOF
+
+This device is now also configured to recieve syslog on port 514 (UDP by default), and forward it along to Wazuh.
+
+EOF
