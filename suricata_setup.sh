@@ -34,14 +34,21 @@ firewall-cmd --permanent --add-port=514/udp
 # sed -i '/TCPServerRun/s/^#//g' /etc/rsyslog.conf # Configure syslog for tcp
 #firewall-cmd --permanent --add-port=514/tcp
 
-# All messages go to /var/log/messages by default, this can create suricata.log
+# Add a template for all remote logs to be sent to /var/log/rsyslog
 
-# sed -i '21i $template RemoteLogs,"/var/log/suricata.log"' /etc/rsyslog.conf # Remote log template, push to suricata.log
-# sed -i '22i *.* ?RemoteLogs' /etc/rsyslog.conf # Remote log template, matches everything
-# sed -i '23i & stop' /etc/rsyslog.conf # Ends evaluation of logs after template match
+sed -i "21i if $fromhost-ip startswith 'xxx.xxx.xxx.' then /var/log/rsyslog" /etc/rsyslog.conf # Remote log template
+sed -i "22i & ~" /etc/rsyslog.conf # Ends evaluation of logs after template match
 
-systemctl restart rsyslog
+# Add Wauh localfile monitoring for /var/log/rsyslog
+
+sed -i '$s/^/  <localfile>\n/' /var/ossec/etc/ossec.conf
+sed -i '$s/^/    <log_format>syslog<\/log_format>\n/' /var/ossec/etc/ossec.conf
+sed -i '$s/^/    <location>\/var\/log\rsyslog<\/location>\n/' /var/ossec/etc/ossec.conf
+sed -i '$s/^/  <\/localfile>\n/' /var/ossec/etc/ossec.conf
+  
 firewall-cmd --reload
+systemctl restart rsyslog
+systemctl restart wazuh-agent
 
 # Create localfile configuration in /var/ossec/etc/ossec.conf
 # All messages go to /var/log/messages by default, this can create suricata.log monitoring
@@ -55,5 +62,7 @@ firewall-cmd --reload
 cat << EOF
 
 Next step is to configure a SPAN/mirror port to forward to ${1-interface} so you can start picking up on lateral network traffic.
+
+This device is now also configured to recieve syslog on port 514 (UDP by default), and forward it along to Wazuh.
 
 EOF
