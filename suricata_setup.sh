@@ -7,9 +7,9 @@
 ### Suricata Installation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 interface=$(ifconfig | grep -m1 flag | cut -d":" -f1) # Grab server interface
 
-# Install and test Suricata-4.1.4
+# Install and test Suricata-4.1.5
 yum install epel-release -y
-yum install suricata-4.1.4 PyYAML -y
+yum install suricata-4.1.5 PyYAML -y
 sudo suricata-update
 sudo suricata-update update-sources
 suricata -T
