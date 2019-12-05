@@ -1,6 +1,6 @@
 # Wazuh
 
-Wazuh is a free, open source and enterprise-ready security monitoring solution for threat detection, integrity monitoring, incident response and compliance.  
+Wazuh is a free, open source and enterprise-ready security monitoring solution for threat detection, integrity monitoring, incident response and compliance. It is a fork of OSSEC with additional features, streamlined deployment options, and easier agent authentication/token distribution methods.
 
 While the tools are publicly available, it is highly recommended that you have them professionally managed for you. A Managed Security Service is capable of managing the back-end maintenaince, troubleshooting, and tuning. They can also provide continuous monitoring, reporting, and investigation and escalation of security incidents. 
 
@@ -10,7 +10,8 @@ The scripts here-in will help you deploy a stand-alone server for proof-of-conce
 
 This script installs a stand-alone instance of Wazuh 3.9.2 on Elastic 7.1.1 and has been tested on CentOS 7.6.  
 It is recommended you deploy this on a CentOS server with 4 vCPUs and at least 8GB RAM.  
-The amount of storage provided is dependent on how long you hope to maintain immediately available logs.  
+The amount of storage provided is dependent on how long you hope to maintain immediately available logs.
+It is recommended that you rotate logs to long-term, cold storage (NFS or S3) if trying to meet compliance requirements for log retention.
 
 ## Installation:
 
