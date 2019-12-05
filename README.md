@@ -55,7 +55,7 @@ This script automates the process of deploying suricata for network intrusion de
 
 # build_install_scripts.sh
 
-This script automates the creation of installation scripts for the different operating systems. The wazuh_setup script already does this, but this is helpful for already deployed instances. The script will ask for your instance IP and authentication password and build installer scripts for CentOS/RedHat, Debian/Ubuntu, MacOS and Windows.
+This script automates the creation of installation scripts for the different operating systems. The wazuh_setup script already does this, but this is helpful for already deployed instances. The script will ask for your instance IP and authentication password and build installer scripts for CentOS/RedHat, Debian/Ubuntu, MacOS and Windows. These agent install scripts are configured to set up TCP connections back to the Wazuh server; if UDP is to be used then the script must be modified accordingly.
 
 # rename_agents.sh
 
