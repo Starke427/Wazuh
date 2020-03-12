@@ -9,5 +9,5 @@ echo net start wazuh
 SCHTASKS /DELETE /TN "Microsoft\Windows\Wazuh\Restart Wazuh" /F
 SCHTASKS /CREATE /SC DAILY /NP /TN "Microsoft\Windows\Wazuh\Restart Wazuh" /TR "C:wazuh_restart.sh" /ST 23:00
 
-echo net stop wazuh
-echo net start wazuh
+net stop wazuh
+net start wazuh
