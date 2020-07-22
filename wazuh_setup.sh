@@ -1,18 +1,17 @@
 #!/bin/bash
 
-# Install Wazuh 3.9.2 on Elastic 7.1.1
+# Install Wazuh 3.13 on Elastic 7.8
 # Deployed on CentOS 7.6
 # Written by Wazuh, automated by Jeff Starke
 
 # This script will install Wazuh and Elastic on a stand-alone CentOS host.
 # It currently does not configure an nginx proxy for TLS  encyprtion.
-# Once ran, it will use the first interface IP to configure everything, so it's recommended to run this on a fresh install.
-# This script will also create agent installation scripts under /var/ossec/agent_scripts.
 # By default, the manager can recieve syslog over UDP/514.
 # This Manager has been configured to use TCP/1514 for on-going communication with agents.
 
 # Introduction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 local_ip=$(ifconfig | grep -w "inet" -m 1 | cut -d " " -f 10) # Grab server ip
+
 cat << EOF
 Initiating installation of Wazuh on localhost...
 
@@ -28,7 +27,14 @@ Wazuh will also need a number of network ports open between itself and the hosts
 you intend to monitor. For a full list of requirements, please refer to:
 https://documentation.wazuh.com/3.x/getting-started/architecture.html
 EOF
+echo ""
+echo "List of IPs associated with this server:"
+echo "$(ifconfig | grep -w "inet" | cut -d " " -f 10)"
+echo ""
+read -p "Please set the static IP of this server: " -i $local_ip -e local_ip
+echo "$local_ip will now be configured as the IP of this server..."
 sleep 5
+
 # Install Wazuh ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH
 cat > /etc/yum.repos.d/wazuh.repo << EOF
@@ -40,10 +46,11 @@ name=Wazuh repository
 baseurl=https://packages.wazuh.com/3.x/yum/
 protect=1
 EOF
-curl --silent --location https://rpm.nodesource.com/setup_8.x | bash -
+curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
 yum install nodejs -y
-yum install wazuh-manager-3.9.2 wazuh-api-3.9.2 -y
+yum install wazuh-manager-3.13.* wazuh-api-3.13.* -y
 sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/wazuh.repo # Disable Wazuh repo
+
 # Install Elastic ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
 cat > /etc/yum.repos.d/elastic.repo << EOF
@@ -56,36 +63,42 @@ enabled=1
 autorefresh=1
 type=rpm-md
 EOF
-yum install filebeat-7.1.1 -y
-curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.9.2/extensions/filebeat/7.x/filebeat.yml
+yum install filebeat-7.8.0 -y
+curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.13.0/extensions/filebeat/7.x/filebeat.yml
 chmod go+r /etc/filebeat/filebeat.yml
-curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/v3.9.2/extensions/elasticsearch/7.x/wazuh-template.json
+curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/v3.13.0/extensions/elasticsearch/7.x/wazuh-template.json
 chmod go+r /etc/filebeat/wazuh-template.json
-sed -i 's/YOUR_ELASTIC_SERVER_IP/localhost/g' /etc/filebeat/filebeat.yml
+curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module
+sed -i "s/YOUR_ELASTIC_SERVER_IP/$local_ip/g" /etc/filebeat/filebeat.yml #localhost is IP address of the Elasticsearch server
 systemctl daemon-reload
 systemctl enable filebeat.service
 systemctl start filebeat.service
-yum install elasticsearch-7.1.1 -y
+yum install elasticsearch-7.8.0 -y
+sed -i '/^#.*node.name/s/^#//' /etc/elasticsearch/elasticsearch.yml
+#sed -i 's/"node-1"/"node_name"/g' /etc/elasticsearch/elasticsearch.yml
+sed -i '/^#.*network.host/s/^#//' /etc/elasticsearch/elasticsearch.yml
+sed -i "s/192.168.0.1/$local_ip/g" /etc/elasticsearch/elasticsearch.yml #local_ip is IP address of the Elasticsearch server
+sed -i '/^#.*cluster.initial_master_nodes/s/^#//' /etc/elasticsearch/elasticsearch.yml
+sed -i 's/"node-1", "node-2"/"node-1"/g' /etc/elasticsearch/elasticsearch.yml
+#sed -i "s/TimeoutStopSec=0/TimeoutStopSec=900/g" /usr/lib/systemd/system/elasticsearch.service #Extend service timeout
 systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl start elasticsearch.service
-yum install kibana-7.1.1 -y
-sudo -u kibana /usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-3.9.2_7.1.1.zip
-sed -i '/server.host/s/^#//g' /etc/kibana/kibana.yml
-sed -i 's/localhost/0.0.0.0/g' /etc/kibana/kibana.yml
+filebeat setup --index-management -E setup.template.json.enabled=false
+sleep 5
+yum install kibana-7.8.0 -y
+cd /usr/share/kibana
+sudo -u kibana /usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-3.13.0_7.8.0.zip
+sed -i '/\#server.host/s/^#//g' /etc/kibana/kibana.yml
+sed -i "s/localhost/$local_ip/g" /etc/kibana/kibana.yml # May be redundant
+sed -i '/elasticsearch.hosts/s/^#//g' /etc/kibana/kibana.yml
+sed -i "s/\/localhost/\/$local_ip/g" /etc/kibana/kibana.yml
 systemctl daemon-reload
 systemctl enable kibana.service
 systemctl start kibana.service
 sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/elastic.repo # Disable Elastic repo
-iptables -I INPUT -p tcp -m tcp --dport 5601 -j ACCEPT # Add iptables rule for kibana access
-iptables -I INPUT -p tcp -m udp --dport 514 -j ACCEPT # Add iptables rule for syslog access
-iptables-save
+
 # Configure Wazuh Manager ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-openssl req -x509 -batch -nodes -days 365 -newkey rsa:4096 -out /var/ossec/etc/sslmanager.cert -keyout /var/ossec/etc/sslmanager.key # Generate SSL cert for authd
-#sed -i 's/<protocol>udp/<protocol>tcp/g' /var/ossec/etc/ossec.conf # Set agent communication to tcp
-#sed -i 's/<frequency>43200/<frequency>7200/g' /var/ossec/etc/ossec.conf # Set integrity checks to every two hours
-#sed -i 's/<use_source_ip>yes/<use_source_ip>no/g' /var/ossec/etc/ossec.conf # Set manager to not depend on source ip
-#sed -i 's/<use_password>no/<use_password>yes/g' /var/ossec/etc/ossec.conf # Set authd to require password for validation
 cat > /var/ossec/etc/ossec.conf << EOF
 <!--
 Wazuh - Manager - Default configuration for centos 7.6
@@ -311,7 +324,7 @@ Mailing list: https://groups.google.com/forum/#!forum/wazuh
 	</command>
 	<!--
 			  <active-response>
-						    active-response options here
+						    #active-response options here
 			  </active-response>
 			  -->
 	<!-- Log analysis -->
@@ -398,10 +411,8 @@ Mailing list: https://groups.google.com/forum/#!forum/wazuh
 	</localfile>
 </ossec_config>
 EOF
-auth_pass=CHANGE_THIS # Set the password for authd validation
-echo "$auth_pass" > /var/ossec/etc/authd.pass
-systemctl restart wazuh-manager
-#auth_pass=$(grep "Random password" /var/ossec/logs/ossec.log | cut -d" " -f16 | tail -1) # Grab authd default password
+
+
 # Agent configuration files ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 mkdir /var/ossec/etc/shared/linux # Create linux group
 cat > /var/ossec/etc/shared/linux/agent.conf << EOF # Linux agent.conf
@@ -410,7 +421,6 @@ cat > /var/ossec/etc/shared/linux/agent.conf << EOF # Linux agent.conf
   More info at: https://documentation.wazuh.com
   Mailing list: https://groups.google.com/forum/#!forum/wazuh
 -->
-
 <ossec_config>
   <client>
     <server>
@@ -619,6 +629,7 @@ cat > /var/ossec/etc/shared/linux/agent.conf << EOF # Linux agent.conf
 EOF
 chown ossec:ossec -R /var/ossec/etc/shared/linux
 
+
 mkdir /var/ossec/etc/shared/windows # Create windows group
 cat > /var/ossec/etc/shared/windows/agent.conf << EOF # Windows agent.conf
 <!--
@@ -626,7 +637,6 @@ cat > /var/ossec/etc/shared/windows/agent.conf << EOF # Windows agent.conf
   More info at: https://documentation.wazuh.com
   Mailing list: https://groups.google.com/forum/#!forum/wazuh
 -->
-
 <ossec_config>
 
   <client>
@@ -852,7 +862,6 @@ cat > /var/ossec/etc/shared/windows/agent.conf << EOF # Windows agent.conf
 </ossec_config>
 
 <!-- END of Default Configuration. -->
-
 EOF
 chown ossec:ossec -R /var/ossec/etc/shared/windows
 
@@ -868,58 +877,15 @@ systemctl restart wazuh-manager
 cat << EOF
 Please navigate to http://$local_ip:5601 to configure the Kibana App.
 
-Agent validation can be performed with the password in /var/ossec/etc/authd.pass
-
 EOF
 
-###############################################################################
-#######
-# Create agent installation scripts.
-mkdir /var/ossec/agent_scripts
-
-#CentOS 7 (wazuh_install_rpm.sh)
-cat > /var/ossec/agent_scripts/wazuh_install_rpm.sh << EOS # Creates CentOS7/RHEL7/Amazon install script
-rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH
-cat > /etc/yum.repos.d/wazuh.repo <<\EOF
-[wazuh_repo]
-gpgcheck=1
-gpgkey=https://packages.wazuh.com/key/GPG-KEY-WAZUH
-enabled=1
-name=Wazuh repository
-baseurl=https://packages.wazuh.com/3.x/yum
-protect=1
-EOF
-WAZUH_MANAGER_IP="$local_ip" WAZUH_PROTOCOL="tcp" WAZUH_PASSWORD="$auth_pass" WAZUH_GROUP="linux" yum install wazuh-agent -y
-sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/wazuh.repo # Disable Wazuh repo
-EOS
-
-#Debian/Ubuntu (wazuh_install_deb.sh)
-cat > /var/ossec/agent_scripts/wazuh_install_deb.sh << EOS
-apt-get install curl apt-transport-https lsb-release gnupg2
-curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
-echo "deb https://packages.wazuh.com/3.x/apt/ stable main" | tee /etc/apt/sources.list.d/wazuh.list
-apt-get update
-WAZUH_MANAGER_IP="$local_ip" WAZUH_PROTOCOL="tcp" WAZUH_PASSWORD="$auth_pass" WAZUH_GROUP="linux" apt-get install wazuh-agent -y
-sed -i "s/^deb/#deb/" /etc/apt/sources.list.d/wazuh.list
-apt-get update
-EOS
-
-#Windows, Must be run from Admin Powershell (wazuh_install.ps1), 2003/XP can be manually installed.
-cat > /var/ossec/agent_scripts/wazuh_install.ps1 << EOS # Creates Windows install PowerShell script
-Invoke-WebRequest https://packages.wazuh.com/3.x/windows/wazuh-agent-3.9.2-1.msi -OutFile C:\wazuh-agent-3.9.2-1.msi
-Start-Process C:\wazuh-agent-3.9.2-1.msi -ArgumentList '/q ADDRESS="$local_ip" AUTHD_SERVER="$local_ip" PROTOCOL="TCP" PASSWORD="$auth_pass" GROUP="windows"' -Wait
-EOS
-
-#MacOS
-cat > /var/ossec/agent_scripts/wazuh_install_macos.sh << EOS
-curl -O https://packages.wazuh.com/3.x/osx/wazuh-agent-3.9.2-1.pkg
-launchctl setenv WAZUH_MANAGER_IP "$local_ip" WAZUH_PROTOCOL "TCP" WAZUH_PASSWORD "$auth_pass" WAZUH_GROUP "macos" && installer -pkg wazuh-agent-3.9.2-1.pkg -target /
-EOS
-
-cat << EOF # Finish agent scripts
-
-Agent installation scripts have been pre-configured based on the localhost's IP and authd password.
-CentOS/RHEL  |  Debian/Ubuntu  |  Amazon Linux  |  Windows  |  MacOS
-
-Installation scripts can be found in /var/ossec/agent_scripts
-EOF
+touch elastic_status.txt
+while ! grep "green" elastic_status.txt
+do
+  curl -XGET "http://$local_ip:9200/_cluster/health?pretty" > elastic_status.txt 2>/dev/null
+  echo "Waiting for elasticsearch to finish setup..."
+  sleep 10
+done 2>/dev/null
+rm -f elastic_status.txt
+echo ""
+echo "Please navigate to http://$local_ip:5601 to configure the Kibana App."
